@@ -4,6 +4,8 @@ import {
   mockDashboardStats,
   mockRecentProjects,
   mockArchitectureTree,
+  mockArchitectureMap,
+  mockDependencyGraph,
 } from '../utils/mockData'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false'
@@ -78,5 +80,17 @@ export async function getRecentProjects() {
 export async function getArchitecture(projectId) {
   if (USE_MOCK) return mockArchitectureTree
   const { data } = await api.get(`/projects/${projectId}/architecture/`)
+  return data
+}
+
+export async function getArchitectureMap(projectId) {
+  if (USE_MOCK) return mockArchitectureMap
+  const { data } = await api.get(`/projects/${projectId}/architecture/map/`)
+  return data
+}
+
+export async function getDependencyGraph(projectId) {
+  if (USE_MOCK) return mockDependencyGraph
+  const { data } = await api.get(`/projects/${projectId}/architecture/graph/`)
   return data
 }

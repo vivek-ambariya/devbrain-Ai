@@ -184,6 +184,95 @@ POST /api/auth/login/
   },
 ]
 
+export const mockArchitectureMap = {
+  layers: [
+    {
+      id: 'client',
+      label: 'Client Layer',
+      description: 'Browser-facing React application',
+      nodes: [
+        { id: 'react-app', label: 'React SPA', type: 'client', detail: 'Vite + React Router' },
+        { id: 'pages', label: 'Pages', type: 'module', detail: 'Dashboard, Chat, Projects' },
+        { id: 'components', label: 'Components', type: 'module', detail: 'Reusable UI blocks' },
+        { id: 'auth-context', label: 'AuthContext', type: 'module', detail: 'JWT session state' },
+      ],
+    },
+    {
+      id: 'api',
+      label: 'API Layer',
+      description: 'REST endpoints exposed to the client',
+      nodes: [
+        { id: 'auth-login', label: 'POST /auth/login', type: 'endpoint', detail: 'Issue JWT tokens' },
+        { id: 'users-api', label: 'GET /users/', type: 'endpoint', detail: 'List users' },
+        { id: 'products-api', label: 'GET /products/', type: 'endpoint', detail: 'Product catalog' },
+        { id: 'payments-api', label: 'POST /payments/', type: 'endpoint', detail: 'Process payment' },
+      ],
+    },
+    {
+      id: 'backend',
+      label: 'Backend Modules',
+      description: 'Django domain logic and services',
+      nodes: [
+        { id: 'auth-mod', label: 'auth', type: 'module', detail: 'Login, register, tokens' },
+        { id: 'users-mod', label: 'users', type: 'module', detail: 'User profiles & roles' },
+        { id: 'payments-mod', label: 'payments', type: 'module', detail: 'Stripe integration' },
+        { id: 'stripe-svc', label: 'stripe_service', type: 'service', detail: 'External payment API' },
+      ],
+    },
+    {
+      id: 'data',
+      label: 'Data & External',
+      description: 'Persistence and third-party systems',
+      nodes: [
+        { id: 'mysql', label: 'MySQL', type: 'database', detail: 'Users, orders, products' },
+        { id: 'chromadb', label: 'ChromaDB', type: 'database', detail: 'Code embeddings / RAG' },
+        { id: 'ollama', label: 'Ollama', type: 'external', detail: 'Local LLM inference' },
+      ],
+    },
+  ],
+  flows: [
+    { from: 'react-app', to: 'auth-login', label: 'login' },
+    { from: 'pages', to: 'users-api', label: 'fetch' },
+    { from: 'auth-login', to: 'auth-mod', label: 'route' },
+    { from: 'users-api', to: 'users-mod', label: 'route' },
+    { from: 'payments-api', to: 'payments-mod', label: 'route' },
+    { from: 'auth-mod', to: 'mysql', label: 'read/write' },
+    { from: 'users-mod', to: 'mysql', label: 'read/write' },
+    { from: 'payments-mod', to: 'stripe-svc', label: 'charge' },
+    { from: 'payments-mod', to: 'mysql', label: 'persist' },
+    { from: 'components', to: 'chromadb', label: 'index' },
+    { from: 'chromadb', to: 'ollama', label: 'RAG query' },
+  ],
+}
+
+export const mockDependencyGraph = {
+  nodes: [
+    { id: 'frontend', label: 'frontend', type: 'client', x: 400, y: 40 },
+    { id: 'api-v1', label: 'api/v1', type: 'api', x: 400, y: 130 },
+    { id: 'auth', label: 'auth', type: 'module', x: 160, y: 240 },
+    { id: 'users', label: 'users', type: 'module', x: 400, y: 240 },
+    { id: 'payments', label: 'payments', type: 'module', x: 640, y: 240 },
+    { id: 'stripe', label: 'stripe_service', type: 'service', x: 640, y: 350 },
+    { id: 'user-model', label: 'User', type: 'entity', x: 400, y: 350 },
+    { id: 'mysql', label: 'MySQL', type: 'database', x: 280, y: 440 },
+    { id: 'chromadb', label: 'ChromaDB', type: 'database', x: 520, y: 440 },
+  ],
+  edges: [
+    { from: 'frontend', to: 'api-v1', label: 'HTTP' },
+    { from: 'api-v1', to: 'auth', label: 'routes' },
+    { from: 'api-v1', to: 'users', label: 'routes' },
+    { from: 'api-v1', to: 'payments', label: 'routes' },
+    { from: 'auth', to: 'users', label: 'imports' },
+    { from: 'payments', to: 'users', label: 'imports' },
+    { from: 'payments', to: 'stripe', label: 'calls' },
+    { from: 'auth', to: 'user-model', label: 'uses' },
+    { id: 'users-model', from: 'users', to: 'user-model', label: 'defines' },
+    { from: 'user-model', to: 'mysql', label: 'ORM' },
+    { from: 'payments', to: 'mysql', label: 'ORM' },
+    { from: 'frontend', to: 'chromadb', label: 'index' },
+  ],
+}
+
 export const mockArchitectureTree = {
   id: 'root',
   name: 'e-commerce-platform',
