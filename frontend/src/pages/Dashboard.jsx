@@ -16,7 +16,8 @@ import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Skeleton from '../components/ui/Skeleton'
 import { getRecentProjects } from '../api/projects'
-import { mockConversations, mockActivity, suggestedQuestions } from '../utils/mockData'
+import { getConversations } from '../api/chat'
+import { suggestedQuestions } from '../utils/mockData'
 import { formatRelativeTime } from '../utils/format'
 import { useAuth } from '../context/AuthContext'
 
@@ -38,16 +39,46 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [projects, setProjects] = useState([])
+  const [conversations, setConversations] = useState([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
 
-  const lastConversation = mockConversations[0]
+  const lastConversation = conversations[0]
   const lastProject = projects[0]
 
+  const activity = [
+    ...projects.slice(0, 2).map((p) => ({
+      id: `p-${p.id}`,
+      type: p.status === 'indexed' ? 'indexed' : 'upload',
+      label: p.status === 'indexed' ? `Indexed ${p.name}` : `Project ${p.name}`,
+      detail: `${p.totalFiles} files · ${p.apisCount} APIs`,
+      timestamp: p.lastIndexed || p.uploadDate,
+      path: '/projects',
+    })),
+    ...conversations.slice(0, 2).map((c) => ({
+      id: `c-${c.id}`,
+      type: 'chat',
+      label: c.title,
+      detail: c.preview || 'Copilot conversation',
+      timestamp: c.updatedAt,
+      path: '/chat',
+    })),
+  ].slice(0, 4)
+
   useEffect(() => {
-    getRecentProjects()
-      .then(setProjects)
-      .finally(() => setLoading(false))
+    const load = async () => {
+      try {
+        const [projectsData, convData] = await Promise.all([
+          getRecentProjects(),
+          getConversations(),
+        ])
+        setProjects(projectsData)
+        setConversations(convData)
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
   }, [])
 
   const handleAsk = (text) => {
@@ -202,7 +233,7 @@ export default function Dashboard() {
           <h2 className="text-sm font-semibold text-text-primary mb-3">Recent activity</h2>
           <Card padding={false}>
             <ul className="divide-y divide-border">
-              {mockActivity.map((item) => {
+              {activity.map((item) => {
                 const Icon = activityIcons[item.type] || Clock
                 return (
                   <li key={item.id}>

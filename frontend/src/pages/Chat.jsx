@@ -13,11 +13,13 @@ import {
   sendMessage,
   streamAIResponse,
 } from '../api/chat'
+import { getProjects } from '../api/projects'
 import { suggestedQuestions } from '../utils/mockData'
 
 export default function Chat() {
   const [searchParams, setSearchParams] = useSearchParams()
   const pendingQuery = useRef(searchParams.get('q'))
+  const [defaultProjectId, setDefaultProjectId] = useState(null)
   const [conversations, setConversations] = useState([])
   const [activeId, setActiveId] = useState(null)
   const [messages, setMessages] = useState([])
@@ -28,9 +30,10 @@ export default function Chat() {
   const sendRef = useRef(null)
 
   useEffect(() => {
-    getConversations().then((data) => {
-      setConversations(data)
-      if (data.length > 0) setActiveId(data[0].id)
+    Promise.all([getConversations(), getProjects()]).then(([convData, projects]) => {
+      setConversations(convData)
+      if (projects.length > 0) setDefaultProjectId(projects[0].id)
+      if (convData.length > 0) setActiveId(convData[0].id)
       setLoading(false)
     })
   }, [])
@@ -53,7 +56,8 @@ export default function Chat() {
   }, [messages, streamingContent])
 
   const handleNewConversation = async () => {
-    const conv = await createConversation('1', 'New conversation')
+    if (!defaultProjectId) return
+    const conv = await createConversation(defaultProjectId, 'New conversation')
     setConversations((prev) => [conv, ...prev])
     setActiveId(conv.id)
     setMessages([])
@@ -63,7 +67,8 @@ export default function Chat() {
     let convId = activeId
 
     if (!convId) {
-      const conv = await createConversation('1', content.slice(0, 40))
+      if (!defaultProjectId) return
+      const conv = await createConversation(defaultProjectId, content.slice(0, 40))
       setConversations((prev) => [conv, ...prev])
       setActiveId(conv.id)
       convId = conv.id

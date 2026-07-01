@@ -21,18 +21,18 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173)
 
-### Demo Mode
+### Backend API
 
-The app runs in mock mode by default (`VITE_USE_MOCK=true`). Use any credentials on the login page to access the dashboard.
-
-To connect to a Django backend:
+Start the Django backend first (see `/backend/README.md`), then:
 
 ```bash
-# .env
-VITE_USE_MOCK=false
+cp .env.example .env   # VITE_USE_MOCK=false
+npm run dev
 ```
 
 API requests proxy to `http://localhost:8000/api` via Vite dev server.
+
+Set `VITE_USE_MOCK=true` to use offline demo data without a backend.
 
 ## Features
 
