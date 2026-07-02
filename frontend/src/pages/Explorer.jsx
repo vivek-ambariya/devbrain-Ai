@@ -429,28 +429,28 @@ export default function Explorer() {
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        <div className="relative">
-                          <Search className="absolute left-2 top-2.5 h-3 w-3 text-[#8B949E]" />
+                        <div className="relative flex items-center">
+                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#8B949E] pointer-events-none" />
                           <input
                             type="text"
                             placeholder="Find inside file..."
                             value={codeSearch}
                             onChange={(e) => setCodeSearch(e.target.value)}
-                            className="pl-7 pr-2.5 py-1 text-[11px] rounded bg-[#1C2128] border border-[#30363D] text-[#E6EDF3] placeholder-[#8B949E] focus:outline-none focus:border-[#58A6FF]"
+                            className="pl-8 pr-2.5 py-1.5 w-44 md:w-56 text-xs rounded bg-[#1C2128] border border-[#30363D] text-[#E6EDF3] placeholder-[#8B949E] focus:outline-none focus:border-[#58A6FF] transition-colors"
                           />
                         </div>
                         <button
                           onClick={handleCopyCode}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#1C2128] border border-[#30363D] text-[#E6EDF3] hover:border-[#58A6FF] transition-colors cursor-pointer"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded bg-[#1C2128] border border-[#30363D] text-[#E6EDF3] hover:border-[#58A6FF] transition-colors cursor-pointer shrink-0"
                         >
                           {copiedCode ? (
                             <>
-                              <Check className="h-3 w-3 text-[#3FB950]" />
-                              <span className="text-[#3FB950]">Copied!</span>
+                              <Check className="h-3.5 w-3.5 text-[#3FB950]" />
+                              <span className="text-[#3FB950] font-medium">Copied!</span>
                             </>
                           ) : (
                             <>
-                              <Copy className="h-3 w-3" />
+                              <Copy className="h-3.5 w-3.5 text-[#8B949E]" />
                               <span>Copy</span>
                             </>
                           )}
