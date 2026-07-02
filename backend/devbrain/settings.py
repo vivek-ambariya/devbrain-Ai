@@ -6,6 +6,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Bypass MariaDB version check for older XAMPP database version compatibility
+try:
+    from django.db.backends.base.base import BaseDatabaseWrapper
+    from django.db.backends.mysql.features import DatabaseFeatures
+    
+    BaseDatabaseWrapper.check_database_version_supported = lambda self: None
+    DatabaseFeatures.can_return_columns_from_insert = property(
+        lambda self: self.connection.mysql_is_mariadb and self.connection.mysql_version >= (10, 5, 0)
+    )
+except ImportError:
+    pass
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'dev-insecure-key-change-in-production')
@@ -123,13 +135,10 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-OLLAMA_BASE_URL = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
-OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama3.2')
-OLLAMA_EMBED_MODEL = os.getenv('OLLAMA_EMBED_MODEL', 'nomic-embed-text')
 CHROMA_PERSIST_DIR = os.getenv('CHROMA_PERSIST_DIR', str(BASE_DIR / 'chroma_data'))
-GROK_API_KEY = os.getenv('GROK_API_KEY', '')
-GROK_API_URL = os.getenv('GROK_API_URL', 'https://api.x.ai/v1/chat/completions')
-GROK_MODEL = os.getenv('GROK_MODEL', 'grok-beta')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+GEMINI_API_URL = os.getenv('GEMINI_API_URL', 'https://generativelanguage.googleapis.com/v1beta/models')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024

@@ -26,6 +26,8 @@ export default function Chat() {
   const [loading, setLoading] = useState(true)
   const [streaming, setStreaming] = useState(false)
   const [streamingContent, setStreamingContent] = useState('')
+  const [error, setError] = useState(null)
+  const [lastUserMessage, setLastUserMessage] = useState('')
   const messagesEndRef = useRef(null)
   const sendRef = useRef(null)
 
@@ -65,17 +67,30 @@ export default function Chat() {
 
   const handleSend = async (content) => {
     let convId = activeId
+    setError(null)
+    setLastUserMessage(content)
 
     if (!convId) {
       if (!defaultProjectId) return
-      const conv = await createConversation(defaultProjectId, content.slice(0, 40))
-      setConversations((prev) => [conv, ...prev])
-      setActiveId(conv.id)
-      convId = conv.id
+      try {
+        const conv = await createConversation(defaultProjectId, content.slice(0, 40))
+        setConversations((prev) => [conv, ...prev])
+        setActiveId(conv.id)
+        convId = conv.id
+      } catch (err) {
+        setError(err.message || 'Failed to initialize conversation')
+        return
+      }
     }
 
-    const userMsg = await sendMessage(convId, content)
-    setMessages((prev) => [...prev, userMsg])
+    let userMsg
+    try {
+      userMsg = await sendMessage(convId, content)
+      setMessages((prev) => [...prev, userMsg])
+    } catch (err) {
+      setError(err.message || 'Failed to send message')
+      return
+    }
 
     setStreaming(true)
     setStreamingContent('')
@@ -86,6 +101,11 @@ export default function Chat() {
         finalContent = chunk
         setStreamingContent(chunk)
       }
+      
+      if (!finalContent) {
+        throw new Error('Received an empty response from the AI assistant.')
+      }
+
       setMessages((prev) => [
         ...prev,
         {
@@ -95,6 +115,8 @@ export default function Chat() {
           timestamp: new Date().toISOString(),
         },
       ])
+    } catch (err) {
+      setError(err.message || 'Error occurred while streaming the AI response')
     } finally {
       setStreaming(false)
       setStreamingContent('')
@@ -164,6 +186,20 @@ export default function Chat() {
                 />
               ))}
               {streaming && !streamingContent && <TypingIndicator />}
+              {error && (
+                <div className="p-4 rounded-xl border border-error/20 bg-error/5 text-sm text-error flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <p className="font-semibold text-text-primary">AI Copilot Error</p>
+                    <p className="text-text-secondary">{error}</p>
+                  </div>
+                  <button
+                    onClick={() => handleSend(lastUserMessage)}
+                    className="px-3 py-1.5 rounded-lg bg-error/10 hover:bg-error/20 border border-error/20 text-xs font-semibold text-error transition-colors shrink-0 cursor-pointer"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
           )}

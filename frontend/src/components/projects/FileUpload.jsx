@@ -8,9 +8,9 @@ import ProgressBar from '../ui/ProgressBar'
 const typeConfig = {
   zip: {
     icon: FileArchive,
-    label: 'Repository ZIP',
-    accept: '.zip',
-    allowedTypes: ['.zip'],
+    label: 'Repository Archive',
+    accept: '.zip,.rar',
+    allowedTypes: ['.zip', '.rar'],
     maxSize: 100 * 1024 * 1024,
   },
   swagger: {

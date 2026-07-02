@@ -1,6 +1,8 @@
 import hashlib
 import os
 import re
+import shutil
+import subprocess
 import zipfile
 from pathlib import Path
 
@@ -34,6 +36,31 @@ def _safe_extract(zip_path: Path, dest: Path) -> None:
             if not str(target).startswith(str(dest.resolve())):
                 continue
             zf.extract(member, dest)
+
+
+def _extract_rar(rar_path: Path, dest: Path) -> None:
+    unar_bin = shutil.which('unar')
+    if not unar_bin:
+        # Fallbacks for standard macOS Homebrew paths
+        for p in ['/opt/homebrew/bin/unar', '/usr/local/bin/unar']:
+            if os.path.exists(p):
+                unar_bin = p
+                break
+
+    if not unar_bin:
+        raise RuntimeError(
+            "RAR extraction tool 'unar' is not installed. "
+            "Please run 'brew install unar' on your system."
+        )
+
+    result = subprocess.run(
+        [unar_bin, "-f", "-o", str(dest.resolve()), str(rar_path.resolve())],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"Failed to extract RAR file: {result.stderr or result.stdout}")
 
 
 def _count_files(root: Path) -> int:
@@ -255,10 +282,13 @@ def index_project(project: Project) -> None:
         extract_dir = media_dir / 'extracted'
         extract_dir.mkdir(parents=True, exist_ok=True)
 
-        for pf in project.files.filter(file_type=ProjectFile.TYPE_ZIP):
-            zip_path = Path(pf.stored_path)
-            if zip_path.exists():
-                _safe_extract(zip_path, extract_dir)
+        for pf in project.files.filter(file_type__in=[ProjectFile.TYPE_ZIP, ProjectFile.TYPE_RAR]):
+            file_path = Path(pf.stored_path)
+            if file_path.exists():
+                if pf.file_type == ProjectFile.TYPE_ZIP:
+                    _safe_extract(file_path, extract_dir)
+                elif pf.file_type == ProjectFile.TYPE_RAR:
+                    _extract_rar(file_path, extract_dir)
 
         root = extract_dir
         if not any(extract_dir.iterdir()) if extract_dir.exists() else True:

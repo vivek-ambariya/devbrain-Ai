@@ -60,13 +60,19 @@ export default function ChatMessage({ message, isStreaming = false }) {
           {!isUser && !isStreaming && (
             <button
               onClick={handleCopy}
-              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/5 text-text-secondary hover:text-text-primary transition-all"
+              className="flex items-center gap-1 px-2 py-0.5 rounded border border-border/40 bg-bg-sidebar/50 text-[10px] text-text-secondary hover:text-text-primary hover:border-border hover:bg-bg-sidebar transition-all cursor-pointer"
               aria-label="Copy response"
             >
               {copied ? (
-                <Check className="h-3 w-3 text-success" />
+                <>
+                  <Check className="h-3 w-3 text-success animate-pulse" />
+                  <span className="text-success font-medium">Copied!</span>
+                </>
               ) : (
-                <Copy className="h-3 w-3" />
+                <>
+                  <Copy className="h-3 w-3" />
+                  <span>Copy</span>
+                </>
               )}
             </button>
           )}

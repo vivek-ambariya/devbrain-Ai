@@ -1,10 +1,10 @@
-import json
+import logging
 from typing import Generator
-
-import httpx
 from django.conf import settings
-
 from projects.services.embeddings import query_project_context
+from chat.services.ai import GeminiAIService, GeminiAIServiceException
+
+logger = logging.getLogger(__name__)
 
 
 def _build_system_prompt(context_chunks: list[dict]) -> str:
@@ -25,59 +25,6 @@ def _build_system_prompt(context_chunks: list[dict]) -> str:
     )
 
 
-def _stream_ollama(messages: list[dict]) -> Generator[str, None, None]:
-    with httpx.Client(timeout=120.0) as client:
-        with client.stream(
-            'POST',
-            f'{settings.OLLAMA_BASE_URL}/api/chat',
-            json={'model': settings.OLLAMA_MODEL, 'messages': messages, 'stream': True},
-        ) as resp:
-            resp.raise_for_status()
-            for line in resp.iter_lines():
-                if not line:
-                    continue
-                try:
-                    payload = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                token = payload.get('message', {}).get('content', '')
-                if token:
-                    yield token
-                if payload.get('done'):
-                    break
-
-
-def _stream_grok(messages: list[dict]) -> Generator[str, None, None]:
-    if not settings.GROK_API_KEY:
-        return
-    headers = {
-        'Authorization': f'Bearer {settings.GROK_API_KEY}',
-        'Content-Type': 'application/json',
-    }
-    body = {
-        'model': settings.GROK_MODEL,
-        'messages': messages,
-        'stream': True,
-    }
-    with httpx.Client(timeout=120.0) as client:
-        with client.stream('POST', settings.GROK_API_URL, headers=headers, json=body) as resp:
-            resp.raise_for_status()
-            for line in resp.iter_lines():
-                if not line or not line.startswith('data: '):
-                    continue
-                data = line[6:]
-                if data == '[DONE]':
-                    break
-                try:
-                    payload = json.loads(data)
-                    delta = payload['choices'][0].get('delta', {})
-                    token = delta.get('content', '')
-                    if token:
-                        yield token
-                except (json.JSONDecodeError, KeyError, IndexError):
-                    continue
-
-
 def generate_response_stream(project_id: int, user_message: str, history: list[dict]) -> Generator[str, None, None]:
     context = query_project_context(project_id, user_message)
     system = _build_system_prompt(context)
@@ -86,31 +33,29 @@ def generate_response_stream(project_id: int, user_message: str, history: list[d
     messages.append({'role': 'user', 'content': user_message})
 
     try:
-        yield from _stream_ollama(messages)
-        return
-    except Exception:
-        pass
-
-    try:
-        yielded = False
-        for token in _stream_grok(messages):
-            yielded = True
-            yield token
-        if yielded:
-            return
-    except Exception:
-        pass
-
-    fallback = (
-        f'## Analysis: {user_message}\n\n'
-        '*(Ollama/Grok unavailable — showing RAG context summary)*\n\n'
-    )
-    if context:
-        fallback += '### Relevant files\n'
-        for c in context:
-            fallback += f"- `{c['path']}`\n"
-        fallback += f"\n### Snippet\n```\n{context[0]['text'][:500]}\n```\n"
-    else:
-        fallback += 'Upload and index a project ZIP to enable codebase-aware answers.'
-    for word in fallback.split(' '):
-        yield word + ' '
+        service = GeminiAIService()
+        yield from service.generate_chat_response_stream(messages)
+    except GeminiAIServiceException as exc:
+        logger.error(f"Gemini AIService error: {exc}")
+        # Send a formatted markdown error message to the user
+        error_msg = (
+            f"❌ **Gemini API Communication Error**\n\n"
+            f"_{str(exc)}_\n\n"
+            "Please check that your `GEMINI_API_KEY` is correctly configured in your `backend/.env` file."
+        )
+        yield error_msg
+    except Exception as exc:
+        logger.error(f"Unexpected error in chat stream generation: {exc}")
+        fallback = (
+            f"## Analysis: {user_message}\n\n"
+            f"*(Gemini API is currently unavailable)*\n\n"
+        )
+        if context:
+            fallback += "### Relevant codebase context files:\n"
+            for c in context:
+                fallback += f"- `{c['path']}`\n"
+            fallback += f"\n### Key Code Snippet:\n```\n{context[0]['text'][:500]}\n```\n"
+        else:
+            fallback += "Please enter a valid GEMINI_API_KEY in your backend `.env` file to enable codebase-aware AI chat."
+            
+        yield fallback

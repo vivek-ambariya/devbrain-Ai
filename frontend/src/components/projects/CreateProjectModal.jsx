@@ -43,7 +43,11 @@ export default function CreateProjectModal({ isOpen, onClose, onCreate }) {
   }
 
   const handleUpload = async (file, type, onProgress) => {
-    return uploadProjectFile(createdProject.id, file, type, onProgress)
+    let resolvedType = type
+    if (type === 'zip' && file.name.toLowerCase().endsWith('.rar')) {
+      resolvedType = 'rar'
+    }
+    return uploadProjectFile(createdProject.id, file, resolvedType, onProgress)
   }
 
   return (

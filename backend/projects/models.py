@@ -42,10 +42,12 @@ class Project(models.Model):
 
 class ProjectFile(models.Model):
     TYPE_ZIP = 'zip'
+    TYPE_RAR = 'rar'
     TYPE_SWAGGER = 'swagger'
     TYPE_DOCS = 'docs'
     TYPE_CHOICES = [
         (TYPE_ZIP, 'ZIP Repository'),
+        (TYPE_RAR, 'RAR Repository'),
         (TYPE_SWAGGER, 'Swagger/OpenAPI'),
         (TYPE_DOCS, 'Documentation'),
     ]

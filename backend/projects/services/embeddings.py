@@ -1,7 +1,6 @@
 import os
+import logging
 from pathlib import Path
-
-import httpx
 from django.conf import settings
 
 _client = None
@@ -60,29 +59,56 @@ def _iter_code_files(root: Path):
                 yield fpath
 
 
+_default_ef = None
+_embedding_cache = {}
+logger = logging.getLogger(__name__)
+
+
+def get_embedding_function():
+    global _default_ef
+    if _default_ef is None:
+        from chromadb.utils import embedding_functions
+        _default_ef = embedding_functions.DefaultEmbeddingFunction()
+    return _default_ef
+
+
 def _embed_texts(texts: list[str]) -> list[list[float]]:
     if not texts:
         return []
-    try:
-        with httpx.Client(timeout=120.0) as client:
-            resp = client.post(
-                f'{settings.OLLAMA_BASE_URL}/api/embed',
-                json={'model': settings.OLLAMA_EMBED_MODEL, 'input': texts},
+
+    result = [None] * len(texts)
+    to_embed = []
+    to_embed_indices = []
+
+    # Check cache first
+    for idx, text in enumerate(texts):
+        if text in _embedding_cache:
+            result[idx] = _embedding_cache[text]
+        else:
+            to_embed.append(text)
+            to_embed_indices.append(idx)
+
+    # Generate missing embeddings
+    if to_embed:
+        try:
+            ef = get_embedding_function()
+            embeddings = ef(to_embed)
+            for idx, embedding in zip(to_embed_indices, embeddings):
+                _embedding_cache[texts[idx]] = embedding
+                result[idx] = embedding
+        except Exception as e:
+            logger.warning(
+                f"ChromaDB default embedding function failed: {e}. "
+                f"Falling back to pseudo-embeddings."
             )
-            resp.raise_for_status()
-            data = resp.json()
-            embeddings = data.get('embeddings')
-            if embeddings:
-                return embeddings
-    except Exception:
-        pass
-    # Fallback: simple hash-based pseudo-embeddings for offline dev
-    import hashlib
-    result = []
-    for text in texts:
-        h = hashlib.sha256(text.encode()).digest()
-        vec = [((h[i % 32] - 128) / 128.0) for i in range(384)]
-        result.append(vec)
+            import hashlib
+            for idx in to_embed_indices:
+                text = texts[idx]
+                h = hashlib.sha256(text.encode()).digest()
+                vec = [((h[i % 32] - 128) / 128.0) for i in range(384)]
+                _embedding_cache[text] = vec
+                result[idx] = vec
+
     return result
 
 
