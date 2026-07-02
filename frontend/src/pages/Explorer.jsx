@@ -27,6 +27,8 @@ import {
   ZoomOut,
   Maximize2
 } from 'lucide-react'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { getProjects, getArchitecture, getFileContent, getFileInsights } from '../api/projects'
 import { streamAIResponse } from '../api/chat'
 import { cn } from '../utils/cn'
@@ -358,10 +360,7 @@ export default function Explorer() {
                 { id: 'architecture', label: 'System Map', icon: Network },
                 { id: 'dependencies', label: 'Dependencies', icon: GitFork },
                 { id: 'apiflow', label: 'API Flow', icon: ArrowRight },
-                { id: 'er', label: 'ER Diagram', icon: Database },
                 { id: 'class', label: 'Class UML', icon: Grid },
-                { id: 'sequence', label: 'Sequence Flow', icon: RefreshCw },
-                { id: 'callgraph', label: 'Call Graph', icon: Sliders },
               ].map((tab) => {
                 const Icon = tab.icon
                 return (
@@ -460,15 +459,39 @@ export default function Explorer() {
                     </div>
 
                     {/* Code Container */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar font-mono bg-[#0D1117] py-3">
+                    <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#0D1117]">
                       {isFileLoading ? (
                         <div className="p-4 space-y-2">
                           {[...Array(12)].map((_, i) => (
                             <div key={i} className="h-4 bg-[#1C2128] rounded animate-pulse w-full" style={{ width: `${80 + (i % 5) * 4}%` }} />
                           ))}
                         </div>
-                      ) : (
-                        renderCodeLines()
+                      ) : fileContent && (
+                        <SyntaxHighlighter
+                          style={oneDark}
+                          language={fileContent.language || 'javascript'}
+                          showLineNumbers={true}
+                          wrapLines={true}
+                          PreTag="div"
+                          lineNumberStyle={{
+                            minWidth: '2.5rem',
+                            paddingRight: '1rem',
+                            borderRight: '1px solid #30363D',
+                            marginRight: '1rem',
+                            color: '#8B949E',
+                            textAlign: 'right',
+                            userSelect: 'none'
+                          }}
+                          customStyle={{
+                            margin: 0,
+                            padding: '1rem 0',
+                            background: 'transparent',
+                            fontSize: '0.75rem',
+                            lineHeight: '1.25rem'
+                          }}
+                        >
+                          {fileContent.content}
+                        </SyntaxHighlighter>
                       )}
                     </div>
 
@@ -667,56 +690,6 @@ export default function Explorer() {
                     </div>
                   )}
 
-                  {/* VISUALIZATION 5: DATABASE ER DIAGRAM */}
-                  {activeTab === 'er' && (
-                    <div className="flex gap-8 flex-wrap justify-center items-start max-w-[650px]">
-                      {[
-                        { 
-                          name: 'projects_project', 
-                          fields: [
-                            { name: 'id', key: 'PK', type: 'bigint' },
-                            { name: 'name', key: '', type: 'varchar(255)' },
-                            { name: 'total_files', key: '', type: 'integer' }
-                          ]
-                        },
-                        { 
-                          name: 'projects_projectfile', 
-                          fields: [
-                            { name: 'id', key: 'PK', type: 'bigint' },
-                            { name: 'project_id', key: 'FK', type: 'bigint' },
-                            { name: 'file_type', key: '', type: 'varchar(10)' }
-                          ]
-                        },
-                        { 
-                          name: 'chat_conversation', 
-                          fields: [
-                            { name: 'id', key: 'PK', type: 'bigint' },
-                            { name: 'project_id', key: 'FK', type: 'bigint' },
-                            { name: 'title', key: '', type: 'varchar(255)' }
-                          ]
-                        }
-                      ].map((table) => (
-                        <div key={table.name} className="rounded-lg border border-[#30363D] bg-[#161B22] overflow-hidden min-w-[200px] shadow-lg">
-                          <div className="px-3 py-1.5 bg-[#1C2128] border-b border-[#30363D] text-[11px] font-bold text-[#E6EDF3] font-mono flex items-center gap-1.5">
-                            <Database className="h-3 w-3 text-[#3FB950]" />
-                            {table.name}
-                          </div>
-                          <div className="p-2 space-y-1 font-mono text-[10px]">
-                            {table.fields.map((f) => (
-                              <div key={f.name} className="flex justify-between gap-4 py-0.5">
-                                <span className="flex items-center gap-1">
-                                  {f.key && <span className="text-[9px] font-bold text-[#D29922]">{f.key}</span>}
-                                  <span className="text-[#E6EDF3]">{f.name}</span>
-                                </span>
-                                <span className="text-[#8B949E]">{f.type}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
                   {/* VISUALIZATION 6: CLASS UML DIAGRAM */}
                   {activeTab === 'class' && (
                     <div className="flex flex-col items-center gap-6">
@@ -755,82 +728,6 @@ export default function Explorer() {
                           <div className="p-2 space-y-1 font-mono text-[9px] text-[#E6EDF3]">
                             <div>+ is_code_file()</div>
                           </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* VISUALIZATION 7: SEQUENCE DIAGRAM */}
-                  {activeTab === 'sequence' && (
-                    <div className="border border-[#30363D] bg-[#161B22] p-6 rounded-xl shadow-lg min-w-[500px]">
-                      <div className="flex justify-between px-6 border-b border-[#30363D] pb-3 text-xs font-semibold text-[#8B949E] font-mono">
-                        <span>User Interface</span>
-                        <span>Django Server</span>
-                        <span>Gemini API</span>
-                      </div>
-                      
-                      <div className="relative py-4 space-y-6 text-[10px] font-mono text-[#8B949E]">
-                        
-                        {/* Timeline vertical guide lines */}
-                        <div className="absolute inset-y-0 left-[10%] border-l border-dashed border-[#30363D]" />
-                        <div className="absolute inset-y-0 left-[50%] border-l border-dashed border-[#30363D]" />
-                        <div className="absolute inset-y-0 right-[10%] border-r border-dashed border-[#30363D]" />
-                        
-                        <div className="flex items-center justify-between relative z-10">
-                          <span className="w-1/3 text-left pl-4 text-[#58A6FF]">1. POST /api/chat/stream/</span>
-                          <ArrowRight className="h-3 w-3 text-[#58A6FF]" />
-                          <span className="w-1/3 text-right pr-4" />
-                        </div>
-                        
-                        <div className="flex items-center justify-between relative z-10">
-                          <span className="w-1/3" />
-                          <span className="w-1/3 text-center text-[#3FB950]">2. Format Prompt</span>
-                          <ArrowRight className="h-3 w-3 text-[#3FB950]" />
-                        </div>
-
-                        <div className="flex items-center justify-between relative z-10">
-                          <span className="w-1/3" />
-                          <span className="w-1/3 text-right pr-2 text-[#D29922]">3. Send HTTP request</span>
-                          <ArrowRight className="h-3 w-3 text-[#D29922]" />
-                        </div>
-
-                        <div className="flex items-center justify-between relative z-10">
-                          <span className="w-1/3" />
-                          <span className="w-1/3 text-right pr-2 text-[#E6EDF3]">4. Stream SSE token</span>
-                          <ArrowRight className="h-3 w-3 text-[#E6EDF3] transform rotate-180" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* VISUALIZATION 8: CALL GRAPH */}
-                  {activeTab === 'callgraph' && (
-                    <div className="flex flex-col items-center gap-4">
-                      <p className="text-xs text-[#8B949E]">Interactive execution flow nodes</p>
-                      
-                      <div className="flex flex-col items-center">
-                        <div className="p-3 bg-[#1C2128] border border-[#30363D] rounded-lg text-center font-mono text-xs text-[#E6EDF3]">
-                          generate_chat_response_stream()
-                        </div>
-                        
-                        <div className="h-6 w-0.5 bg-[#30363D]" />
-                        
-                        <div className="flex gap-8">
-                          {[
-                            { name: '_get_api_url()', detail: 'URL resolve' },
-                            { name: '_format_messages()', detail: 'Role parser' }
-                          ].map((f) => (
-                            <div key={f.name} className="flex flex-col items-center">
-                              <div className="p-3 bg-[#161B22] border border-[#30363D] rounded-lg text-center font-mono text-xs text-[#E6EDF3]">
-                                {f.name}
-                                <span className="block text-[9px] text-[#8B949E] mt-0.5">{f.detail}</span>
-                              </div>
-                              <div className="h-6 w-0.5 bg-[#30363D]" />
-                              <div className="p-2.5 bg-[#1C2128] border border-[#30363D] rounded-md font-mono text-[9px] text-[#8B949E]">
-                                return string
-                              </div>
-                            </div>
-                          ))}
                         </div>
                       </div>
                     </div>
