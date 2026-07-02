@@ -316,8 +316,8 @@ export default function Explorer() {
         {/* PANEL LEFT: Repository File Tree */}
         <aside className="w-64 border-r border-[#30363D] bg-[#0D1117] flex flex-col shrink-0 overflow-hidden">
           <div className="p-3 border-b border-[#30363D] bg-[#161B22]/50 shrink-0">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#8B949E]" />
+            <div className="relative flex items-center">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#8B949E] pointer-events-none" />
               <input
                 type="text"
                 placeholder="Find files..."
