@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard,
   FolderKanban,
+  FolderOpen,
   MessageSquare,
   Network,
   GraduationCap,
@@ -16,6 +17,7 @@ import { cn } from '../../utils/cn'
 const navItems = [
   { to: '/dashboard', label: 'Home', icon: LayoutDashboard },
   { to: '/projects', label: 'Projects', icon: FolderKanban },
+  { to: '/explorer', label: 'Explorer', icon: FolderOpen },
   { to: '/chat', label: 'Copilot', icon: MessageSquare },
   { to: '/architecture', label: 'Architecture', icon: Network },
   { to: '/onboarding', label: 'Onboarding', icon: GraduationCap },

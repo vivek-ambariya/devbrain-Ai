@@ -94,3 +94,40 @@ export async function getDependencyGraph(projectId) {
   const { data } = await api.get(`/projects/${projectId}/architecture/graph/`)
   return data
 }
+
+export async function getFileContent(projectId, path) {
+  if (USE_MOCK) {
+    return {
+      name: path.split('/').pop(),
+      path: path,
+      content: `// Mock file content for ${path}\n\nfunction main() {\n  console.log("Welcome to DevBrain Explorer!");\n}`,
+      size: 128,
+      last_modified: new Date().toISOString(),
+      language: path.split('.').pop() || 'javascript'
+    }
+  }
+  const { data } = await api.get(`/projects/${projectId}/file-content/`, { params: { path } })
+  return data
+}
+
+export async function getFileInsights(projectId, path) {
+  if (USE_MOCK) {
+    return {
+      summary: "This is a mock component summarizing helper functions.",
+      responsibilities: ["Initialization", "State syncing"],
+      dependencies: ["axios", "lucide-react"],
+      imported_modules: ["react"],
+      exported_functions: ["main"],
+      related_files: ["App.jsx", "main.jsx"],
+      complexity_score: "Low (2/10)",
+      possible_bugs: ["Check for asynchronous initialization timing issues."],
+      security_suggestions: ["Verify access tokens before routing."],
+      suggested_refactoring: ["Consolidate duplicate logic branches."],
+      suggested_unit_tests: ["Verify standard setup operations."],
+      related_apis: ["GET /api/v1/projects"],
+      related_tables: ["projects_project"]
+    }
+  }
+  const { data } = await api.get(`/projects/${projectId}/file-insights/`, { params: { path } })
+  return data
+}

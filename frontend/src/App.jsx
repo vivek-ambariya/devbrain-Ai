@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard'
 import Projects from './pages/Projects'
 import Chat from './pages/Chat'
 import Architecture from './pages/Architecture'
+import Explorer from './pages/Explorer'
 import Onboarding from './pages/Onboarding'
 import Settings from './pages/Settings'
 
@@ -44,6 +45,7 @@ export default function App() {
               <Route element={<DashboardLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/projects" element={<Projects />} />
+                <Route path="/explorer" element={<Explorer />} />
                 <Route path="/chat" element={<Chat />} />
                 <Route path="/architecture" element={<Architecture />} />
                 <Route path="/onboarding" element={<Onboarding />} />
