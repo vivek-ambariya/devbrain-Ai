@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Brain } from 'lucide-react'
 import AuthLayout from '../../components/layout/AuthLayout'
 import Input from '../../components/ui/Input'
 import PasswordInput from '../../components/auth/PasswordInput'
@@ -18,7 +17,23 @@ export default function Login() {
   const handleChange = (field) => (e) => {
     const value = field === 'remember' ? e.target.checked : e.target.value
     setForm((prev) => ({ ...prev, [field]: value }))
-    setErrors((prev) => ({ ...prev, [field]: null }))
+    setErrors((prev) => ({ ...prev, [field]: null, form: null }))
+  }
+
+  const parseErrorMessage = (err) => {
+    if (!err?.response?.data) return 'Incorrect username or password.'
+    const data = err.response.data
+    if (typeof data === 'string') return data
+    if (data.detail) return data.detail
+    if (data.email) return Array.isArray(data.email) ? data.email[0] : data.email
+    if (data.password) return Array.isArray(data.password) ? data.password[0] : data.password
+    if (data.non_field_errors) return Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors
+    const firstKey = Object.keys(data)[0]
+    if (firstKey) {
+      const val = data[firstKey]
+      return Array.isArray(val) ? `${val[0]}` : `${val}`
+    }
+    return 'Incorrect username or password.'
   }
 
   const handleSubmit = async (e) => {
@@ -40,7 +55,7 @@ export default function Login() {
       await login(form)
       navigate('/dashboard')
     } catch (err) {
-      setErrors({ form: err.response?.data?.detail || 'Incorrect username or password.' })
+      setErrors({ form: parseErrorMessage(err) })
     } finally {
       setLoading(false)
     }
@@ -48,34 +63,29 @@ export default function Login() {
 
   return (
     <AuthLayout>
-      <div className="lg:hidden flex items-center gap-2 mb-6">
-        <div className="h-8 w-8 rounded-md bg-bg-subtle border border-border flex items-center justify-center">
-          <Brain className="h-4 w-4 text-text-primary" />
+      <div className="glass-panel p-6 rounded-2xl border border-border/80 shadow-2xl space-y-4">
+        <div>
+          <h2 className="text-xl font-bold text-text-primary">Sign in to DevBrain AI</h2>
+          <p className="text-xs text-text-secondary mt-1">
+            Access your engineering workspace & architecture telemetry
+          </p>
         </div>
-        <span className="font-semibold text-text-primary text-sm">Sign in to DevBrain AI</span>
-      </div>
 
-      <div className="gh-box p-4">
-        <h2 className="text-xl font-semibold text-text-primary mb-1">Sign in</h2>
-        <p className="text-sm text-text-secondary mb-4">
-          to continue to DevBrain AI
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-3" noValidate>
+        <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
           <Input
             label="Email address"
             type="email"
             value={form.email}
             onChange={handleChange('email')}
             error={errors.email}
-            placeholder="you@company.com"
+            placeholder="demo@devbrain.ai"
             autoComplete="email"
             required
           />
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-sm font-semibold text-text-primary">Password</label>
-              <a href="#" className="text-xs text-accent hover:underline">Forgot password?</a>
+              <label className="text-xs font-semibold text-text-primary">Password</label>
+              <a href="#" className="text-[11px] text-accent-gold hover:underline">Forgot password?</a>
             </div>
             <PasswordInput
               label=""
@@ -93,29 +103,29 @@ export default function Login() {
               type="checkbox"
               checked={form.remember}
               onChange={handleChange('remember')}
-              className="h-4 w-4 rounded border-border bg-bg-primary accent-success-emphasis"
+              className="h-4 w-4 rounded border-border bg-bg-primary accent-accent-gold"
             />
-            <span className="text-sm text-text-secondary">Remember me</span>
+            <span className="text-xs text-text-secondary">Remember me on this device</span>
           </label>
 
           {errors.form && (
-            <div className="text-sm text-error px-3 py-2 rounded-md border border-error/30 bg-error/10" role="alert">
+            <div className="text-xs text-accent-rust px-3.5 py-2.5 rounded-lg border border-accent-rust/40 bg-accent-rust/10 font-medium" role="alert">
               {errors.form}
             </div>
           )}
 
-          <Button type="submit" loading={loading} className="w-full" size="lg">
-            Sign in
+          <Button type="submit" loading={loading} className="w-full bg-accent-gold text-bg-primary font-bold hover:bg-accent-gold-light" size="lg">
+            Sign In
           </Button>
         </form>
-      </div>
 
-      <p className="text-center text-sm text-text-secondary mt-4">
-        New to DevBrain AI?{' '}
-        <Link to="/register" className="text-accent hover:underline">
-          Create an account
-        </Link>
-      </p>
+        <p className="text-center text-xs text-text-secondary pt-2 border-t border-border-muted/50">
+          New to DevBrain AI?{' '}
+          <Link to="/register" className="text-accent-gold hover:underline font-semibold">
+            Create an account
+          </Link>
+        </p>
+      </div>
     </AuthLayout>
   )
 }

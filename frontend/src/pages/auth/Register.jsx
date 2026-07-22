@@ -16,7 +16,29 @@ export default function Register() {
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }))
-    setErrors((prev) => ({ ...prev, [field]: null }))
+    setErrors((prev) => ({ ...prev, [field]: null, form: null }))
+  }
+
+  const parseErrorMessage = (err) => {
+    if (!err?.response?.data) return 'Registration failed. Please try again.'
+    const data = err.response.data
+    if (typeof data === 'string') return data
+    if (data.detail) return data.detail
+    if (data.email) {
+      return Array.isArray(data.email) ? data.email[0] : data.email
+    }
+    if (data.password) {
+      return Array.isArray(data.password) ? data.password[0] : data.password
+    }
+    if (data.name) {
+      return Array.isArray(data.name) ? data.name[0] : data.name
+    }
+    const firstKey = Object.keys(data)[0]
+    if (firstKey) {
+      const val = data[firstKey]
+      return Array.isArray(val) ? `${val[0]}` : `${val}`
+    }
+    return 'Registration failed. Please try again.'
   }
 
   const handleSubmit = async (e) => {
@@ -41,7 +63,15 @@ export default function Register() {
       await register({ name: form.name, email: form.email, password: form.password })
       navigate('/dashboard')
     } catch (err) {
-      setErrors({ form: err.response?.data?.detail || 'Registration failed. Please try again.' })
+      const msg = parseErrorMessage(err)
+      if (msg.toLowerCase().includes('already exists')) {
+        setErrors({
+          email: 'A user with this email already exists.',
+          form: 'Email is already registered. Please sign in instead or use another email.',
+        })
+      } else {
+        setErrors({ form: msg })
+      }
     } finally {
       setLoading(false)
     }
@@ -49,19 +79,21 @@ export default function Register() {
 
   return (
     <AuthLayout>
-      <div className="gh-box p-4">
-        <h2 className="text-xl font-semibold text-text-primary mb-1">Create your account</h2>
-        <p className="text-sm text-text-secondary mb-4">
-          Start analyzing your engineering projects
-        </p>
+      <div className="glass-panel p-6 rounded-2xl border border-border/80 shadow-2xl space-y-4">
+        <div>
+          <h2 className="text-xl font-bold text-text-primary">Create your account</h2>
+          <p className="text-xs text-text-secondary mt-1">
+            Start analyzing your engineering projects & codebase architecture
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3" noValidate>
+        <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
           <Input
             label="Full name"
             value={form.name}
             onChange={handleChange('name')}
             error={errors.name}
-            placeholder="John Doe"
+            placeholder="e.g. Demo Engineer"
             autoComplete="name"
             required
           />
@@ -71,7 +103,7 @@ export default function Register() {
             value={form.email}
             onChange={handleChange('email')}
             error={errors.email}
-            placeholder="you@company.com"
+            placeholder="e.g. alex.dev@gmail.com"
             autoComplete="email"
             required
           />
@@ -82,7 +114,7 @@ export default function Register() {
             error={errors.password}
             placeholder="Create a password"
             autoComplete="new-password"
-            hint="Min 8 characters with uppercase, lowercase, and number"
+            hint="Min 6 characters"
             required
           />
           <PasswordInput
@@ -96,23 +128,28 @@ export default function Register() {
           />
 
           {errors.form && (
-            <div className="text-sm text-error px-3 py-2 rounded-md border border-error/30 bg-error/10" role="alert">
-              {errors.form}
+            <div className="text-xs text-accent-rust px-3.5 py-2.5 rounded-lg border border-accent-rust/40 bg-accent-rust/10 font-medium" role="alert">
+              {errors.form}{' '}
+              {errors.form.includes('already registered') && (
+                <Link to="/login" className="underline font-bold text-accent-gold ml-1">
+                  Sign in here &rarr;
+                </Link>
+              )}
             </div>
           )}
 
-          <Button type="submit" loading={loading} className="w-full" size="lg">
-            Create account
+          <Button type="submit" loading={loading} className="w-full bg-accent-gold text-bg-primary font-bold hover:bg-accent-gold-light" size="lg">
+            Create Account
           </Button>
         </form>
-      </div>
 
-      <p className="text-center text-sm text-text-secondary mt-4">
-        Already have an account?{' '}
-        <Link to="/login" className="text-accent hover:underline">
-          Sign in
-        </Link>
-      </p>
+        <p className="text-center text-xs text-text-secondary pt-2 border-t border-border-muted/50">
+          Already have an account?{' '}
+          <Link to="/login" className="text-accent-gold hover:underline font-semibold">
+            Sign in
+          </Link>
+        </p>
+      </div>
     </AuthLayout>
   )
 }
