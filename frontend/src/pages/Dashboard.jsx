@@ -10,11 +10,15 @@ import {
   Network,
   GraduationCap,
   Clock,
+  Sparkles,
+  ShieldCheck,
+  Activity,
 } from 'lucide-react'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Skeleton from '../components/ui/Skeleton'
+import InteractiveAnalyticsGraph from '../components/dashboard/InteractiveAnalyticsGraph'
 import { getRecentProjects } from '../api/projects'
 import { getConversations } from '../api/chat'
 import { suggestedQuestions } from '../utils/mockData'
@@ -88,14 +92,14 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="space-y-6 max-w-4xl">
+      <div className="space-y-6 max-w-5xl">
         <Skeleton className="h-10 w-64 rounded-md" />
         <Skeleton className="h-14 w-full rounded-md" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Skeleton className="h-28 rounded-md" />
           <Skeleton className="h-28 rounded-md" />
         </div>
-        <Skeleton className="h-48 w-full rounded-md" />
+        <Skeleton className="h-64 w-full rounded-md" />
       </div>
     )
   }
@@ -103,19 +107,25 @@ export default function Dashboard() {
   const firstName = user?.name?.split(' ')[0] || 'there'
 
   return (
-    <div className="max-w-4xl space-y-8">
-      {/* Greeting */}
-      <div>
-        <h1 className="text-2xl font-semibold text-text-primary">
-          {getGreeting()}, {firstName}
-        </h1>
-        <p className="text-sm text-text-secondary mt-1">
-          Pick up where you left off or ask something about your codebase.
-        </p>
+    <div className="max-w-5xl space-y-8 pb-12">
+      {/* Greeting & Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-muted/60 pb-5">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary">
+            {getGreeting()}, <span className="gold-gradient-text">{firstName}</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-text-secondary mt-1">
+            Real-time codebase telemetry, architecture graphs, and AI concierge assistance.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-xs font-mono text-text-muted">Telemetry Connected</span>
+        </div>
       </div>
 
-      {/* Command bar — not a stats dashboard */}
-      <div className="gh-box p-1">
+      {/* AI Command Bar */}
+      <div className="glass-panel p-2 rounded-xl border border-accent-gold/30 shadow-lg">
         <form
           onSubmit={(e) => {
             e.preventDefault()
@@ -123,26 +133,30 @@ export default function Dashboard() {
           }}
           className="flex items-center gap-2"
         >
-          <Search className="h-4 w-4 text-text-muted shrink-0 ml-3" aria-hidden="true" />
+          <Search className="h-4 w-4 text-accent-gold shrink-0 ml-3" aria-hidden="true" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask about your codebase..."
-            className="flex-1 bg-transparent py-2.5 text-sm text-text-primary placeholder:text-text-muted outline-none"
+            placeholder="Ask AI Concierge about your codebase architecture, routes, or refactoring..."
+            className="flex-1 bg-transparent py-2.5 text-xs sm:text-sm text-text-primary placeholder:text-text-muted outline-none font-sans"
             aria-label="Ask about your codebase"
           />
-          <Button type="submit" size="sm" className="mr-1 shrink-0">
-            Ask Copilot
-          </Button>
+          <button
+            type="submit"
+            className="px-4 py-2 rounded-lg bg-accent-gold text-bg-primary font-semibold text-xs transition-all hover:bg-accent-gold-light shrink-0"
+          >
+            Ask Concierge
+          </button>
         </form>
-        <div className="flex flex-wrap gap-1.5 px-3 pb-2.5 pt-1 border-t border-border">
+        <div className="flex flex-wrap gap-1.5 px-3 pb-2 pt-2 border-t border-border-muted/40">
+          <span className="text-[11px] text-text-muted font-mono self-center mr-1">Suggested:</span>
           {suggestedQuestions.slice(0, 4).map((q) => (
             <button
               key={q}
               type="button"
               onClick={() => handleAsk(q)}
-              className="text-xs text-text-secondary hover:text-accent px-2 py-1 rounded-md hover:bg-bg-muted transition-colors"
+              className="text-xs text-text-secondary hover:text-accent-gold px-2.5 py-1 rounded-md hover:bg-bg-muted transition-colors font-mono"
             >
               {q}
             </button>
@@ -150,27 +164,39 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Live Interactive Analytics Graph (The User's Request) */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-mono font-bold text-text-primary uppercase tracking-wider">
+            [ Codebase Telemetry & Graph Analytics ]
+          </h2>
+        </div>
+        <InteractiveAnalyticsGraph />
+      </section>
+
       {/* Continue where you left off */}
-      <section>
-        <h2 className="text-sm font-semibold text-text-primary mb-3">Continue</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <section className="space-y-3">
+        <h2 className="text-sm font-mono font-bold text-text-primary uppercase tracking-wider">
+          [ Quick Access & Resumption ]
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {lastProject && (
             <button
               onClick={() => navigate('/projects')}
-              className="gh-box p-4 text-left hover:border-text-muted transition-colors group"
+              className="glass-panel glass-panel-hover p-4 rounded-xl text-left border border-border/80 group"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <FolderKanban className="h-4 w-4 text-text-muted shrink-0" />
-                  <span className="text-xs text-text-muted">Last project</span>
+                  <FolderKanban className="h-4 w-4 text-accent-gold shrink-0" />
+                  <span className="text-xs font-mono text-text-muted">Last Project</span>
                 </div>
-                <ArrowRight className="h-3.5 w-3.5 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                <ArrowRight className="h-3.5 w-3.5 text-accent-gold opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0" />
               </div>
-              <p className="text-sm font-semibold text-text-primary mt-2 truncate">
+              <p className="text-sm font-bold text-text-primary mt-2 truncate">
                 {lastProject.name}
               </p>
-              <p className="text-xs text-text-muted mt-1">
-                {lastProject.totalFiles} files · {formatRelativeTime(lastProject.lastIndexed)}
+              <p className="text-xs text-text-secondary font-mono mt-1">
+                {lastProject.totalFiles} files &bull; {formatRelativeTime(lastProject.lastIndexed)}
               </p>
             </button>
           )}
@@ -178,19 +204,19 @@ export default function Dashboard() {
           {lastConversation && (
             <button
               onClick={() => navigate('/chat')}
-              className="gh-box p-4 text-left hover:border-text-muted transition-colors group"
+              className="glass-panel glass-panel-hover p-4 rounded-xl text-left border border-border/80 group"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <MessageSquare className="h-4 w-4 text-text-muted shrink-0" />
-                  <span className="text-xs text-text-muted">Last conversation</span>
+                  <MessageSquare className="h-4 w-4 text-accent-rust shrink-0" />
+                  <span className="text-xs font-mono text-text-muted">Last Conversation</span>
                 </div>
-                <ArrowRight className="h-3.5 w-3.5 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                <ArrowRight className="h-3.5 w-3.5 text-accent-rust opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0" />
               </div>
-              <p className="text-sm font-semibold text-text-primary mt-2 truncate">
+              <p className="text-sm font-bold text-text-primary mt-2 truncate">
                 {lastConversation.title}
               </p>
-              <p className="text-xs text-text-muted mt-1 line-clamp-1">
+              <p className="text-xs text-text-secondary font-mono mt-1 line-clamp-1">
                 {lastConversation.preview}
               </p>
             </button>
@@ -198,90 +224,62 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* Repositories — compact, GitHub-style */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-text-primary">Your repositories</h2>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/projects')}>
-            View all
-          </Button>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {projects.map((project) => (
-            <button
-              key={project.id}
-              onClick={() => navigate('/projects')}
-              className="gh-box p-4 text-left hover:border-text-muted transition-colors"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-accent truncate">{project.name}</p>
-                <Badge variant={project.status} dot>
-                  {project.status}
-                </Badge>
-              </div>
-              <p className="text-xs text-text-muted mt-2">
-                {project.totalFiles} files
-              </p>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* Activity feed + shortcuts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <section className="lg:col-span-2">
-          <h2 className="text-sm font-semibold text-text-primary mb-3">Recent activity</h2>
-          <Card padding={false}>
-            <ul className="divide-y divide-border">
-              {activity.map((item) => {
-                const Icon = activityIcons[item.type] || Clock
-                return (
-                  <li key={item.id}>
-                    <button
-                      onClick={() => navigate(item.path)}
-                      className="flex items-start gap-3 w-full px-4 py-3 text-left hover:bg-bg-muted transition-colors"
-                    >
-                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-bg-subtle border border-border">
-                        <Icon className="h-3.5 w-3.5 text-text-muted" aria-hidden="true" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm text-text-primary">{item.label}</p>
-                        <p className="text-xs text-text-muted mt-0.5">{item.detail}</p>
-                      </div>
-                      <span className="text-[11px] text-text-muted shrink-0 mt-0.5">
-                        {formatRelativeTime(item.timestamp)}
-                      </span>
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          </Card>
+      {/* Repositories & Activity Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <section className="lg:col-span-2 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-mono font-bold text-text-primary uppercase tracking-wider">
+              [ Recent Repositories ]
+            </h2>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/projects')} className="text-xs text-accent-gold">
+              View all
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {projects.map((project) => (
+              <button
+                key={project.id}
+                onClick={() => navigate('/projects')}
+                className="glass-panel p-4 rounded-xl text-left hover:border-accent-gold/40 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-bold text-text-primary truncate">{project.name}</p>
+                  <Badge variant={project.status} dot>
+                    {project.status}
+                  </Badge>
+                </div>
+                <p className="text-xs text-text-muted font-mono mt-2">
+                  {project.totalFiles} files &bull; {project.apisCount} APIs
+                </p>
+              </button>
+            ))}
+          </div>
         </section>
 
-        <section>
-          <h2 className="text-sm font-semibold text-text-primary mb-3">Explore</h2>
-          <Card padding={false}>
-            <div className="p-1">
-              {[
-                { label: 'Browse architecture', desc: 'Folder & API tree', icon: Network, path: '/architecture' },
-                { label: 'Onboarding guide', desc: 'Learn the codebase', icon: GraduationCap, path: '/onboarding' },
-                { label: 'Upload a project', desc: 'ZIP, Swagger, docs', icon: Upload, path: '/projects' },
-              ].map(({ label, desc, icon: Icon, path }) => (
-                <button
-                  key={label}
-                  onClick={() => navigate(path)}
-                  className="flex items-center gap-3 w-full px-3 py-2.5 rounded-md hover:bg-bg-muted transition-colors text-left"
-                >
-                  <Icon className="h-4 w-4 text-text-muted shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-text-primary">{label}</p>
-                    <p className="text-xs text-text-muted">{desc}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </Card>
+        <section className="space-y-3">
+          <h2 className="text-sm font-mono font-bold text-text-primary uppercase tracking-wider">
+            [ Explore Architecture ]
+          </h2>
+          <div className="glass-panel p-2 rounded-xl space-y-1">
+            {[
+              { label: 'Architecture Map', desc: 'Layered System Flow', icon: Network, path: '/architecture' },
+              { label: 'Code Explorer', desc: 'File Tree & AST', icon: FolderKanban, path: '/explorer' },
+              { label: 'AI Concierge', desc: 'Natural Language Search', icon: Sparkles, path: '/chat' },
+              { label: 'Onboarding Guide', desc: 'Codebase Walkthrough', icon: GraduationCap, path: '/onboarding' },
+            ].map(({ label, desc, icon: Icon, path }) => (
+              <button
+                key={label}
+                onClick={() => navigate(path)}
+                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-bg-muted transition-colors text-left group"
+              >
+                <Icon className="h-4 w-4 text-accent-gold shrink-0 group-hover:scale-110 transition-transform" />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-text-primary">{label}</p>
+                  <p className="text-[11px] text-text-muted font-mono">{desc}</p>
+                </div>
+              </button>
+            ))}
+          </div>
         </section>
       </div>
     </div>

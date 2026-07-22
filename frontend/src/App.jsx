@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { NotificationProvider } from './context/NotificationContext'
 import DashboardLayout from './components/layout/DashboardLayout'
+import Landing from './pages/Landing'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import Dashboard from './pages/Dashboard'
@@ -26,6 +27,10 @@ export default function App() {
         <AuthProvider>
           <NotificationProvider>
             <Routes>
+              {/* Landing Page on root route / */}
+              <Route path="/" element={<Landing />} />
+
+              {/* Auth Routes */}
               <Route
                 path="/login"
                 element={
@@ -42,6 +47,8 @@ export default function App() {
                   </PublicRoute>
                 }
               />
+
+              {/* Dashboard Layout Routes */}
               <Route element={<DashboardLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/projects" element={<Projects />} />
@@ -51,8 +58,9 @@ export default function App() {
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+              {/* Fallback Route */}
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </NotificationProvider>
         </AuthProvider>
